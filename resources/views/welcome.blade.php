@@ -6,7 +6,7 @@
 
 
 <div class="container d-flex flex-column justify-content-center align-items-center vh-100 text-center">
-    <i class="fas fa-ship fa-5x text-primary mb-3"></i>
+    <i class="fas fa-ship fa-5x text-white mb-3"></i>
     <h1 class="display-4">🎮 Welcome to the Game</h1>
     <p class="lead">Get ready for an exciting experience!</p>
     <div class="mt-3">

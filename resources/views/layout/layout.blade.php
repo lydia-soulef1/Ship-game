@@ -12,9 +12,37 @@
     <title>@yield('title', 'Battleship Game')</title>
     @vite(['resources/css/ship.css'])
     @yield('styles')
+
 </head>
 
 <body>
+
+<div id="loading-screen">
+        <lord-icon
+            src="https://cdn.lordicon.com/ilwtivnh.json"
+            trigger="loop"
+            colors="primary:#121331,secondary:#08a88a"
+            style="width:250px;height:250px">
+        </lord-icon>
+    </div>
+
+
+    <script src="https://cdn.lordicon.com/lordicon.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(function() {
+                let loader = document.getElementById('loading-screen');
+                loader.classList.add('fade-out'); 
+
+                setTimeout(function() {
+                    loader.style.display = 'none';
+                    document.getElementById('content').style.display = 'block';
+                }, 1000);
+            }, 1000); 
+        });
+    </script>
+
 
     <div class="top-bar d-flex align-items-center m-2">
         <!-- أيقونة الإعدادات -->
