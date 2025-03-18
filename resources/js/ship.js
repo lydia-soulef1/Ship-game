@@ -79,16 +79,17 @@ function isPositionOccupied(position, ships) {
 
 function createGrid(gridElement, ships, isComputerGrid) {
     gridElement.style.display = 'grid';
-    gridElement.style.gridTemplateColumns = `repeat(${gridSize}, 40px)`;
+    gridElement.style.gridTemplateColumns = `repeat(${gridSize}, minmax(25px, 1fr))`; // يجعل الخلايا مرنة
     gridElement.style.gap = '5px';
+    gridElement.style.maxWidth = '90vw'; // يمنع الشبكة من التمدد أكثر من اللازم
     for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
             const cell = document.createElement('div');
-            cell.style.width = '40px';
-            cell.style.height = '40px';
+            cell.style.width = '100%';
+            cell.style.aspectRatio = '1 / 1'; // يجعل المربعات مربعة دائماً
             cell.style.backgroundColor = 'lightgray';
             cell.style.cursor = 'pointer';
-            cell.style.borderRadius = '10px';
+            cell.style.borderRadius = '5px';
             cell.dataset.position = `${row}-${col}`;
             if (!isComputerGrid) {
                 ships.forEach(ship => {
@@ -115,6 +116,7 @@ function createGrid(gridElement, ships, isComputerGrid) {
     }
 }
 
+
 function disablePlayerBoard() {
     document.querySelector('#player-grid').style.pointerEvents = 'none';
     document.querySelector('#player-grid').style.opacity = '0.5';
@@ -133,92 +135,88 @@ let initialHit = null;
 function computerTurn() {
     if (playerTotalShipsLeft === 0) return;
 
-    disablePlayerBoard(); // تعطيل دور اللاعب أثناء هجوم الكمبيوتر
+    disablePlayerBoard(); 
 
-    let hitAgain = false; // تعريف المتغير هنا
+    let hitAgain = false; // لتعقب الضربات المتتالية
     
     let directions = {
-        horizontal: [
-            [0, 1],
-            [0, -1]
-        ],
-        vertical: [
-            [1, 0],
-            [-1, 0]
-        ]
+        horizontal: [[0, 1], [0, -1]],
+        vertical: [[1, 0], [-1, 0]]
     };
 
     function attackNext() {
-        setTimeout(() => {
-            let availableCells = Array.from(document.querySelectorAll('#player-grid div'))
-                .filter(cell => cell.style.backgroundColor === 'lightgray' || cell.style.backgroundColor === 'darkgray');
-            if (availableCells.length === 0) return;
+        let availableCells = Array.from(document.querySelectorAll('#player-grid div'))
+            .filter(cell => cell.style.backgroundColor === 'lightgray' || cell.style.backgroundColor === 'darkgray');
+        if (availableCells.length === 0) {
+            enablePlayerBoard(); // إذا لم يكن هناك خلايا متاحة، ينتهي الدور فورًا
+            return;
+        }
 
-            let targetCell = attackQueue.length > 0 ? attackQueue.shift() : availableCells[Math.floor(Math.random() * availableCells.length)];
-            if (!targetCell) return;
+        let targetCell = attackQueue.length > 0 ? attackQueue.shift() : availableCells[Math.floor(Math.random() * availableCells.length)];
+        if (!targetCell) {
+            enablePlayerBoard();
+            return;
+        }
 
-            setTimeout(() => {
-                let isShipHit = false;
-                playerShips.forEach(ship => {
-                    if (ship.positions.has(targetCell.dataset.position)) {
-                        targetCell.style.backgroundColor = 'black';
-                        ship.hitPositions.add(targetCell.dataset.position);
-                        hitAgain = true; // تم تعريفه مسبقًا
+        let isShipHit = false;
+        playerShips.forEach(ship => {
+            if (ship.positions.has(targetCell.dataset.position)) {
+                targetCell.style.backgroundColor = 'black';
+                ship.hitPositions.add(targetCell.dataset.position);
+                hitAgain = true;
 
-                        if (ship.hitPositions.size === ship.size) {
-                            ship.positions.forEach(pos => {
-                                document.querySelector(`#player-grid [data-position="${pos}"]`).style.backgroundColor = ship.color;
-                            });
-                            playerTotalShipsLeft--;
-                            lastHit = null;
-                            initialHit = null;
-                            attackQueue = [];
-                            attackDirection = null;
-                            updateDisplays();
-                        } else {
-                            let [r, c] = targetCell.dataset.position.split('-').map(Number);
-                            if (!initialHit) initialHit = targetCell.dataset.position;
-                            if (lastHit) {
-                                let [lastR, lastC] = lastHit.split('-').map(Number);
-                                attackDirection = (r === lastR) ? 'horizontal' : 'vertical';
-                            }
-                            lastHit = targetCell.dataset.position;
-                            attackQueue = [];
-                            let validDirections = attackDirection ? directions[attackDirection] : [...directions.horizontal, ...directions.vertical];
-                            validDirections.forEach(([dr, dc]) => {
-                                let newPos = `${r + dr}-${c + dc}`;
-                                let newCell = document.querySelector(`#player-grid [data-position="${newPos}"]`);
-                                if (newCell && (newCell.style.backgroundColor === 'lightgray' || newCell.style.backgroundColor === 'darkgray')) {
-                                    attackQueue.push(newCell);
-                                }
-                            });
-                        }
-                        isShipHit = true;
-                    }
-                });
-
-                if (!isShipHit) {
-                    targetCell.style.backgroundColor = 'blue';
-                    hitAgain = false;
-                }
-
-                if (playerTotalShipsLeft === 0) {
-                    setTimeout(() => {
-                        alert('❌ Computer Wins!');
-                        sendScoreToDatabase(-50, 0, 1, 0);
-                        enablePlayerBoard();
-                    }, 500);
-                    return;
-                }
-
-                if (hitAgain || attackQueue.length > 0) {
-                    attackNext();
+                if (ship.hitPositions.size === ship.size) {
+                    ship.positions.forEach(pos => {
+                        document.querySelector(`#player-grid [data-position="${pos}"]`).style.backgroundColor = ship.color;
+                    });
+                    playerTotalShipsLeft--;
+                    lastHit = null;
+                    initialHit = null;
+                    attackQueue = [];
+                    attackDirection = null;
+                    updateDisplays();
                 } else {
-                    enablePlayerBoard();
-                }
+                    let [r, c] = targetCell.dataset.position.split('-').map(Number);
+                    if (!initialHit) initialHit = targetCell.dataset.position;
+                    if (lastHit) {
+                        let [lastR, lastC] = lastHit.split('-').map(Number);
+                        attackDirection = (r === lastR) ? 'horizontal' : 'vertical';
+                    }
+                    lastHit = targetCell.dataset.position;
+                    attackQueue = [];
 
-            }, 300);
-        }, 500);
+                    let validDirections = attackDirection ? directions[attackDirection] : [...directions.horizontal, ...directions.vertical];
+                    validDirections.forEach(([dr, dc]) => {
+                        let newPos = `${r + dr}-${c + dc}`;
+                        let newCell = document.querySelector(`#player-grid [data-position="${newPos}"]`);
+                        if (newCell && (newCell.style.backgroundColor === 'lightgray' || newCell.style.backgroundColor === 'darkgray')) {
+                            attackQueue.push(newCell);
+                        }
+                    });
+                }
+                isShipHit = true;
+            }
+        });
+
+        if (!isShipHit) {
+            targetCell.style.backgroundColor = 'blue';
+            hitAgain = false;
+        }
+
+        if (playerTotalShipsLeft === 0) {
+            setTimeout(() => {
+                alert('❌ Computer Wins!');
+                sendScoreToDatabase(-50, 0, 1, 0);
+                enablePlayerBoard();
+            }, 500);
+            return;
+        }
+
+        if (hitAgain || attackQueue.length > 0) {
+            attackNext(); // استمر في الهجوم
+        } else {
+            enablePlayerBoard(); // انتهاء الدور
+        }
     }
 
     attackNext();

@@ -5,10 +5,11 @@ body {
     color: white;
     margin: 0;
     padding: 0;
+    
 }
 
 h1 {
-    margin-bottom: 5px;
+    margin-bottom: 0;
     font-size: 22px;
 }
 
@@ -30,6 +31,17 @@ h1 {
 
     margin: 5px auto;
 }
+@media (min-width: 992px) {
+    .grid-container {
+        grid-template-columns: repeat(10, 40px);
+        /* حجم أكبر لسطح المكتب */
+    }
+
+    .grid-container div {
+        width: 40px;
+        height: 40px;
+    }
+}
 
 .grid-container div {
     width: 40px;
@@ -38,6 +50,27 @@ h1 {
     background-color: lightgray;
     cursor: pointer;
     border-radius: 3px;
+}
+@media (min-width: 600px) {
+    .game-container {
+        flex-direction: row;
+        justify-content: center;
+    }
+    
+    .grid-container {
+        grid-template-columns: repeat(10, 40px);
+    }
+}
+
+@media (max-width: 600px) {
+    .grid-container {
+        grid-template-columns: repeat(10, minmax(30px, 1fr)); /* أفضل من 25px */
+    }
+
+    .grid-container div {
+        width: 25px;
+        height: 30px;
+    }
 }
 
 .grid-container div::after {
@@ -54,8 +87,12 @@ h1 {
 }
 
 .info {
-    margin: 10px;
+   
     font-size: 14px;
+}
+
+.info p {
+    margin: 0; /* إزالة أي مسافات داخلية */
 }
 
 /* .btn {

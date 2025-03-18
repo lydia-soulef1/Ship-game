@@ -5,15 +5,18 @@
 
 
 
-<div class="container text-center mt-5">
+<div class="container d-flex flex-column justify-content-center align-items-center vh-100 text-center">
+    <i class="fas fa-ship fa-5x text-primary mb-3"></i>
     <h1 class="display-4">🎮 Welcome to the Game</h1>
     <p class="lead">Get ready for an exciting experience!</p>
-    <a href="/play" class="btn btn-success btn-lg">Play Now</a>
-    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#leaderboardModal">
-        🏆 Leaderboard
-    </button>
-
+    <div class="mt-3">
+        <a href="/play" class="btn btn-success btn-lg">Play Now</a>
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#leaderboardModal">
+            🏆 Leaderboard
+        </button>
+    </div>
 </div>
+
 
 <div class="modal fade" id="leaderboardModal" tabindex="-1" aria-labelledby="leaderboardModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -62,17 +65,17 @@
 </div>
 
 <script>
-document.getElementById('filterPeriod').addEventListener('change', function () {
-    let period = this.value;
+    document.getElementById('filterPeriod').addEventListener('change', function() {
+        let period = this.value;
 
-    fetch(`/leaderboard/filter?period=${period}`)
-        .then(response => response.json())
-        .then(data => {
-            let tbody = document.getElementById('leaderboardBody');
-            tbody.innerHTML = ''; // تفريغ الجدول قبل التحديث
+        fetch(`/leaderboard/filter?period=${period}`)
+            .then(response => response.json())
+            .then(data => {
+                let tbody = document.getElementById('leaderboardBody');
+                tbody.innerHTML = ''; // تفريغ الجدول قبل التحديث
 
-            data.forEach((player, index) => {
-                let row = `<tr>
+                data.forEach((player, index) => {
+                    let row = `<tr>
                             <td>${index + 1}</td>
                             <td>${player.name}</td>
                             <td>${player.score}
@@ -81,11 +84,11 @@ document.getElementById('filterPeriod').addEventListener('change', function () {
                                 </p>
                             </td>
                         </tr>`;
-                tbody.innerHTML += row;
-            });
-        })
-        .catch(error => console.error('Error fetching leaderboard:', error));
-});
+                    tbody.innerHTML += row;
+                });
+            })
+            .catch(error => console.error('Error fetching leaderboard:', error));
+    });
 </script>
 
 
