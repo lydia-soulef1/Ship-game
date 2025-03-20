@@ -3,10 +3,19 @@
 @section('content')
 <div class="container mt-5 text-center">
     <h1>Battleship Online 🎯</h1>
-    <div class="info d-flex justify-content-center gap-4">
-        <p id="player-ships-left">Player Ships Left: 4</p>
-        <p id="opponent-ships-left">Opponent Ships Left: 4</p>
+    <div class="room-code-container text-center">
+    <div>
+    Room Code: <span id="room-code">----</span>
+    <i id="copy-room-code" class="fas fa-copy" style="cursor: pointer; color: white; margin-left: 8px;"></i>
+</div>
+
+
     </div>
+    <div class="info d-flex justify-content-center gap-4">
+        <div id="player-ships-left">Your Ships Left: 4</div>
+        <div id="opponent-ships-left">Opponent Ships Left: 4</div>
+    </div>
+
 </div>
 
 <div class="game-container d-flex justify-content-center flex-wrap gap-5 mt-4">

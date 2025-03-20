@@ -22,12 +22,10 @@
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="#" onclick="alert('Coming Soon!'); return false;">
+                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#onlineModal">
                             Vs Online
                         </a>
                     </li>
-
-                    <!-- <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#onlineModal">Vs Online</a></li> -->
                 </ul>
             </div>
 
@@ -48,7 +46,6 @@
             </div>
             <div class="modal-body text-center">
                 <button id="createRoom" class="btn btn-success btn-lg w-100 mb-3">Create New Room</button>
-
                 <hr>
                 <input type="text" id="roomCode" class="form-control text-center" placeholder="Enter Room Code">
                 <button class="btn btn-info mt-2" id="joinRoom">Join Room</button>
@@ -139,11 +136,12 @@
     });
 
     document.getElementById("joinRoom").addEventListener("click", function() {
-        let roomCode = prompt("Enter Room Code:");
-        if (roomCode) {
             window.location.href = "/playOnline?room=" + roomCode;
-        }
+        
     });
 </script>
+
+@vite(['resources/js/room.js'])
+
 
 @endsection

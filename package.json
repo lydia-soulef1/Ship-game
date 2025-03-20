@@ -18,5 +18,24 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "esbuild": "^0.25.0",
+    "nanoid": "^3.3.8",
+    "picocolors": "^1.1.1",
+    "picomatch": "^2.3.1",
+    "postcss": "^8.5.3",
+    "rollup": "^4.34.9",
+    "source-map-js": "^1.2.1",
+    "vite-plugin-full-reload": "^1.2.0",
+    "ws": "^8.18.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KamelABA/Ship-game.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KamelABA/Ship-game/issues"
+  },
+  "homepage": "https://github.com/KamelABA/Ship-game#readme"
 }
