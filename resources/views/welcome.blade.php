@@ -10,10 +10,50 @@
     <h1 class="display-4">🎮 Welcome to the Game</h1>
     <p class="lead">Get ready for an exciting experience!</p>
     <div class="mt-3">
-        <a href="/play" class="btn btn-success btn-lg">Play Now</a>
-        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#leaderboardModal">
-            🏆 Leaderboard
-        </button>
+        <div class="mt-3 d-flex justify-content-center gap-3">
+            <div class="dropdown">
+                <button class="btn btn-success btn-lg dropdown-toggle" type="button" id="playOptions" data-bs-toggle="dropdown" aria-expanded="false">
+                    Play Now
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="playOptions">
+                    <li>
+                        <a class="dropdown-item" href="/play">
+                            Vs Computer
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="alert('Coming Soon!'); return false;">
+                            Vs Online
+                        </a>
+                    </li>
+
+                    <!-- <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#onlineModal">Vs Online</a></li> -->
+                </ul>
+            </div>
+
+
+            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#leaderboardModal">
+                🏆 Leaderboard
+            </button>
+        </div>
+    </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="onlineModal" tabindex="-1" aria-labelledby="onlineModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="onlineModalLabel">Play Online</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <button id="createRoom" class="btn btn-success btn-lg w-100 mb-3">Create New Room</button>
+
+                <hr>
+                <input type="text" id="roomCode" class="form-control text-center" placeholder="Enter Room Code">
+                <button class="btn btn-info mt-2" id="joinRoom">Join Room</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -91,6 +131,19 @@
     });
 </script>
 
+<script>
+    document.getElementById("createRoom").addEventListener("click", function() {
+        let roomCode = Math.random().toString(36).substring(2, 8).toUpperCase(); // إنشاء كود عشوائي
+        localStorage.setItem("roomCode", roomCode); // حفظ الكود مؤقتًا
+        window.location.href = "/playOnline?room=" + roomCode; // توجيه اللاعب إلى الغرفة
+    });
 
+    document.getElementById("joinRoom").addEventListener("click", function() {
+        let roomCode = prompt("Enter Room Code:");
+        if (roomCode) {
+            window.location.href = "/playOnline?room=" + roomCode;
+        }
+    });
+</script>
 
 @endsection

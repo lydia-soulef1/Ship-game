@@ -31,3 +31,8 @@ Route::post('/update-score', [GameController::class, 'updateScore']);
 
 Route::get('/', [GameController::class, 'leaderboard'])->name('welcome');
 Route::get('/leaderboard/filter', [GameController::class, 'filterLeaderboard']);
+
+
+Route::get('/playOnline', function () {
+    return view('playOnline');
+})->name('playOnline');

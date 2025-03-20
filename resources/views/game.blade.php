@@ -28,6 +28,6 @@
         <button class="btn btn-info">Home</button>
     </a>
 </div>
-
+@vite(['resources/js/ship.js'])
 
 @endsection

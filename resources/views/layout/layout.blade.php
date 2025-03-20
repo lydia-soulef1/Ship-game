@@ -37,7 +37,6 @@
 
                 setTimeout(function() {
                     loader.style.display = 'none';
-                    document.getElementById('content').style.display = 'block';
                 }, 1000);
             }, 1000); 
         });
@@ -144,7 +143,7 @@
     @yield('content')
 
 
-    @vite(['resources/js/ship.js'])
+    
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
