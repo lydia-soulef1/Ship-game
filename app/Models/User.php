@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Leaderboard; // تأكد من استيراد المودل
 
 class User extends Authenticatable
 {
@@ -17,7 +18,7 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $fillable = ['name', 'email', 'password', 'score', 'wins', 'loses'];
+    protected $fillable = ['name', 'email', 'password', 'score', 'wins', 'loses', 'matches_played', 'kraken'];
 
 
     /**
@@ -42,4 +43,14 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+
+
+    // علاقة بين المستخدم وجدول الترتيب (Leaderboard)
+    public function leaderboard()
+    {
+        return $this->hasOne(Leaderboard::class, 'user_id', 'id');
+    }
+
+
 }

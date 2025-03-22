@@ -10,9 +10,13 @@ Route::get('/', function () {
 
 require __DIR__.'/auth.php';
 
-Route::get('/play', function () {
-    return view('game');
-});
+
+Route::get('/profile', function () {
+    if (Auth::check()) {
+        return view('profile');
+    }
+    return redirect('/login'); // توجيه المستخدم إلى صفحة تسجيل الدخول إذا لم يكن مسجلًا
+})->name('profile');
 
 Route::get('/register', function () {
     return view('auth.register'); // تأكد أن لديك `resources/views/auth/register.blade.php`
@@ -76,3 +80,7 @@ Route::get('/game-status', function (Request $request) {
 
     return response()->json(['status' => 'Waiting for players...']);
 });
+
+
+
+Route::get('/matches-played', [GameController::class, 'getMatchesPlayed'])->middleware('auth');

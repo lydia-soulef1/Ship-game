@@ -435,3 +435,4 @@ function handleOpponentAttack(position) {
         setTimeout(opponentTurn, 1000);
     }
 }
+

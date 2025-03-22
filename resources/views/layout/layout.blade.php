@@ -17,7 +17,7 @@
 
 <body>
 
-<div id="loading-screen">
+    <div id="loading-screen">
         <lord-icon
             src="https://cdn.lordicon.com/ilwtivnh.json"
             trigger="loop"
@@ -33,18 +33,17 @@
         document.addEventListener("DOMContentLoaded", function() {
             setTimeout(function() {
                 let loader = document.getElementById('loading-screen');
-                loader.classList.add('fade-out'); 
+                loader.classList.add('fade-out');
 
                 setTimeout(function() {
                     loader.style.display = 'none';
                 }, 1000);
-            }, 1000); 
+            }, 1000);
         });
     </script>
 
 
     <div class="top-bar d-flex align-items-center m-2">
-        <!-- أيقونة الإعدادات -->
         <div class="dropdown">
             <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="settingsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                 ⚙️ Settings
@@ -52,6 +51,9 @@
             <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
                 @if(Auth::check())
                 <li><span class="dropdown-item-text fw-bold">Welcome, {{ Auth::user()->name }}</span></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('profile') }}">👤 profile</a>
+                </li>
                 @else
                 <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button></li>
                 @endif
@@ -74,6 +76,38 @@
             </ul>
         </div>
     </div>
+
+    @if(Auth::check())
+    <div id="currency-display" class="position-absolute top-0 end-0 m-3 d-flex align-items-center gap-3">
+        <!-- Kraken Display -->
+        <div id="kraken-display" class="d-flex align-items-center bg-black text-white px-2 py-1 rounded-pill shadow-sm"
+            data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ Auth::user()->kraken ?? 0 }} Kraken">
+            <span class="fs-6 fw-bold me-2">🦑</span>
+            <span id="kraken-count" class="fs-6 fw-bold">{{ Auth::user()->kraken ?? 0 }}</span>
+        </div>
+
+        <!-- Gold Display -->
+        <div id="gold-display" class="d-flex align-items-center bg-black text-white px-2 py-1 rounded-pill shadow-sm"
+            data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ Auth::user()->gold ?? 0 }} Gold">
+            <span class="fs-6 fw-bold">
+                💰 <span id="gold-count">{{ Auth::user()->gold ?? 0 }}</span>
+            </span>
+        </div>
+    </div>
+    @endif
+    <!-- Unified Tooltip Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+                new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+
+
+
+
 
 
     <div class="modal fade text-dark" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
@@ -139,11 +173,28 @@
         </div>
     </div>
 
+    <div class="modal fade" id="goldBonusModal" tabindex="-1" aria-labelledby="goldBonusLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="goldBonusLabel">🎉 Welcome!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <h4>🏆 You received <strong>200 Gold</strong> as a welcome bonus!</h4>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     @yield('content')
 
 
-    
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -167,6 +218,15 @@
             alert('Language change functionality coming soon!');
         }
     </script>
+
+    @if(session('gold_bonus'))
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var myModal = new bootstrap.Modal(document.getElementById('goldBonusModal'));
+            myModal.show();
+        });
+    </script>
+    @endif
 
 
 </body>

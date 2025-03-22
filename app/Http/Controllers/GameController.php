@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Leaderboard;
+use Illuminate\Support\Facades\Cache;
 
 
 
@@ -18,6 +19,7 @@ class GameController extends Controller
             'wins' => 'required|integer',
             'losses' => 'required|integer',
             'crystals' => 'required|integer',
+            'match_type' => 'required|string|in:vsOnline,vsComputer',
         ]);
     
         $user = Auth::user();
@@ -30,7 +32,6 @@ class GameController extends Controller
                 ->first();
     
             if ($leaderboardEntry) {
-                // ✅ تحديث القيم بإضافة الجديد إلى السابق
                 $leaderboardEntry->increment('score', $validated['score']);
                 $leaderboardEntry->increment('wins', $validated['wins']);
                 $leaderboardEntry->increment('losses', $validated['losses']);
@@ -39,7 +40,6 @@ class GameController extends Controller
     
                 return response()->json(['success' => true, 'message' => "Guest score updated in leaderboard"]);
             } else {
-                // 🆕 إنشاء سجل جديد للضيف
                 Leaderboard::create([
                     'user_id' => null,
                     'name' => $guestName,
@@ -58,30 +58,45 @@ class GameController extends Controller
         $leaderboardEntry = Leaderboard::where('user_id', $user->id)->first();
     
         if ($leaderboardEntry) {
-            // ✅ تحديث القيم بإضافة الجديد إلى السابق
             $leaderboardEntry->increment('score', $validated['score']);
             $leaderboardEntry->increment('wins', $validated['wins']);
             $leaderboardEntry->increment('losses', $validated['losses']);
             $leaderboardEntry->increment('crystals', $validated['crystals']);
             $leaderboardEntry->update(['last_match_time' => now()]);
-    
-            return response()->json(['success' => true, 'message' => 'Score updated in leaderboard']);
+        } else {
+            Leaderboard::create([
+                'user_id' => $user->id,
+                'name' => $user->name ?? $guestName,
+                'score' => $validated['score'],
+                'wins' => $validated['wins'],
+                'losses' => $validated['losses'],
+                'crystals' => $validated['crystals'],
+                'last_match_time' => now(),
+            ]);
         }
     
-        // 🆕 إنشاء سجل جديد إذا لم يكن المستخدم لديه سجل سابق
-        Leaderboard::create([
-            'user_id' => $user->id,
-            'name' => $user->name ?? $guestName,
-            'score' => $validated['score'],
-            'wins' => $validated['wins'],
-            'losses' => $validated['losses'],
-            'crystals' => $validated['crystals'],
-            'last_match_time' => now(),
+        // ✅ تحديث عدد المباريات
+        $matchesPlayed = json_decode($user->matches_played, true) ?? ['vsOnline' => 0, 'vsComputer' => 0];
+    
+        if (!isset($matchesPlayed[$validated['match_type']])) {
+            $matchesPlayed[$validated['match_type']] = 0;
+        }
+    
+        $matchesPlayed[$validated['match_type']] += 1;
+    
+        $user->update([
+            'matches_played' => json_encode($matchesPlayed),
         ]);
     
-        return response()->json(['success' => true, 'message' => 'Score added to leaderboard']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Match played count updated successfully',
+            'matches_played' => $matchesPlayed,
+        ]);
     }
     
+
+
 
 
     public function leaderboard()
@@ -104,4 +119,48 @@ class GameController extends Controller
 
         return response()->json($query->take(10)->get());
     }
+    
+
+    public function createRoom()
+    {
+        $roomCode = strtoupper(substr(md5(uniqid()), 0, 6)); // كود عشوائي للغرفة
+        Cache::put("room_{$roomCode}", ['players' => [], 'moves' => []], now()->addHours(1)); // حفظ البيانات في الكاش لمدة ساعة
+
+        return response()->json(['success' => true, 'roomCode' => $roomCode]);
+    }
+    public function joinRoom(Request $request)
+    {
+        $roomCode = $request->room_code;
+        $room = Cache::get("room_{$roomCode}");
+
+        if (!$room) {
+            return response()->json(['success' => false, 'message' => '❌ الغرفة غير موجودة']);
+        }
+
+        if (count($room['players']) >= 2) {
+            return response()->json(['success' => false, 'message' => '❌ الغرفة ممتلئة']);
+        }
+
+        $room['players'][] = "player_" . (count($room['players']) + 1);
+        Cache::put("room_{$roomCode}", $room, now()->addHours(1));
+
+        return response()->json(['success' => true, 'message' => '🎮 انضممت إلى الغرفة']);
+    }
+
+    public function getMatchesPlayed()
+{
+    $user = Auth::user();
+    
+    if (!$user) {
+        return response()->json(['success' => false, 'message' => 'Guests cannot see match statistics.']);
+    }
+
+    $matchesPlayed = json_decode($user->matches_played, true);
+    
+    return response()->json([
+        'success' => true,
+        'matches_played' => $matchesPlayed,
+    ]);
+}
+
 }

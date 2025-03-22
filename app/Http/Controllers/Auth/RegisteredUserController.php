@@ -17,33 +17,35 @@ class RegisteredUserController extends Controller
 
     
 
-public function store(Request $request)
-{
-    try {
-        Log::info('Register request received', $request->all());
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        Log::info('User registered successfully', ['user_id' => $user->id]);
-
-        Auth::login($user);
-
-        return redirect()->route('dashboard');
-    } catch (\Exception $e) {
-        Log::error('Registration error', ['message' => $e->getMessage()]);
-        return back()->withErrors('حدث خطأ أثناء التسجيل.');
+    public function store(Request $request)
+    {
+        try {
+            Log::info('Register request received', $request->all());
+    
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'password' => 'required|string|min:8',
+            ]);
+    
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'gold' => 200, // ✅ إعطاء المستخدم الجديد 200 ذهب
+            ]);
+    
+            Log::info('User registered successfully', ['user_id' => $user->id]);
+    
+            Auth::login($user);
+    
+            return redirect()->route('dashboard')->with('gold_bonus', true);
+        } catch (\Exception $e) {
+            Log::error('Registration error', ['message' => $e->getMessage()]);
+            return back()->withErrors('حدث خطأ أثناء التسجيل.');
+        }
     }
-}
+    
 
 }
 

@@ -135,10 +135,10 @@ let initialHit = null;
 function computerTurn() {
     if (playerTotalShipsLeft === 0) return;
 
-    disablePlayerBoard(); 
+    disablePlayerBoard();
 
     let hitAgain = false; // لتعقب الضربات المتتالية
-    
+
     let directions = {
         horizontal: [[0, 1], [0, -1]],
         vertical: [[1, 0], [-1, 0]]
@@ -237,7 +237,7 @@ function handlePlayerAttack(cell, ships) {
     if (cell.style.backgroundColor !== 'yellow') return;
 
     disableComputerBoard(); // تعطيل الكمبيوتر أثناء دور اللاعب
-    
+
     let isShipHit = false;
     if (cell.dataset.position === crystalPosition) {
         cell.style.backgroundColor = 'purple';
@@ -248,6 +248,7 @@ function handlePlayerAttack(cell, ships) {
             if (ship.positions.has(cell.dataset.position)) {
                 cell.style.backgroundColor = 'black';
                 ship.hitPositions.add(cell.dataset.position);
+                sendScoreToDatabase(1, 0, 0, 0);
                 if (ship.hitPositions.size === ship.size) {
                     ship.positions.forEach(pos => {
                         document.querySelector(`#computer-grid [data-position="${pos}"]`).style.backgroundColor = ship.color;
@@ -264,7 +265,7 @@ function handlePlayerAttack(cell, ships) {
         cell.style.backgroundColor = 'blue';
         setTimeout(() => {
             enableComputerBoard(); // إعادة تمكين الكمبيوتر بعد هجوم اللاعب
-            computerTurn(); 
+            computerTurn();
         }, 500);
     } else {
         enableComputerBoard(); // إعادة تمكين الكمبيوتر بعد انتهاء الهجوم
@@ -294,7 +295,22 @@ function sendScoreToDatabase(score, wins, losses, crystals) {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
-        body: JSON.stringify({ score, wins, losses, crystals })
+        body: JSON.stringify({
+            score,
+            wins,
+            losses,
+            crystals,
+            match_type: "vsComputer"
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Server responded with status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("✅ Server Response:", data);
     })
     .catch(error => console.error('❌ Fetch error:', error));
 }
