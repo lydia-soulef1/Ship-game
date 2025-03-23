@@ -14,7 +14,7 @@
                 <p class="text-dark">You earned <strong>25 points</strong> and <strong>1 Kraken</strong>!</p>
             </div>
             <div class="modal-footer justify-content-center"> <!-- Center the button -->
-            <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal" id="collectTreasure">Collect</button>
+                <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal" id="collectTreasure">Collect</button>
             </div>
         </div>
     </div>
@@ -33,15 +33,30 @@
 
 
 <div class="game-container">
-    <div>
-        <h2>Player</h2>
-        <div id="computer-grid" class="grid-container"></div>
+    <!-- Ship Selection UI -->
+    <div id="ship-selection" class="card p-3 text-center">
+        <h5 class="text-dark fw-bold">Select & Place Ships</h5>
+        <div id="ship-options" class="d-flex flex-wrap gap-2 justify-content-center"></div>
+        <button id="flip-button" class="btn btn-primary mt-2">Flip</button>
+        <button id="random-btn" class="btn btn-danger mt-2">Random</button>
+        <button id="start-game-button" class="btn btn-success mt-2">Start Game</button>
     </div>
-    <div>
-        <h2>Computer</h2>
+
+    <!-- Player's Grid -->
+    <div id="player-section">
+        <h2>Player</h2>
         <div id="player-grid" class="grid-container"></div>
     </div>
+
+    <!-- Computer's Grid (Hidden Until Game Starts) -->
+    <div id="computer-section" style="display: none;">
+        <h2>Computer</h2>
+        <div id="computer-grid" class="grid-container"></div>
+    </div>
 </div>
+
+
+
 
 <div class="mt-3">
     <button id="retry" class="btn btn-danger">Restart Game</button>
@@ -53,20 +68,22 @@
 <script>
     document.getElementById("collectTreasure").addEventListener("click", function() {
         fetch("{{ route('update.kraken') }}", {
-            method: "POST",
-            headers: {
-                "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ increment: 1 }) // Add 1 Kraken
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById("kraken-count").textContent = data.newKrakenCount;
-            }
-        })
-        .catch(error => console.error("Error:", error));
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    increment: 1
+                }) // Add 1 Kraken
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("kraken-count").textContent = data.newKrakenCount;
+                }
+            })
+            .catch(error => console.error("Error:", error));
     });
 </script>
 
