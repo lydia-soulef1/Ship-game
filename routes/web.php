@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return view('welcome');
@@ -10,6 +11,10 @@ Route::get('/', function () {
 
 require __DIR__.'/auth.php';
 
+
+Route::get('/play', function () {
+    return view('game');
+});
 
 Route::get('/profile', function () {
     if (Auth::check()) {
@@ -39,7 +44,8 @@ Route::get('/leaderboard/filter', [GameController::class, 'filterLeaderboard']);
 
 Route::get('/playOnline', function () {
     return view('playOnline');
-})->name('playOnline');
+})->middleware('auth')->name('playOnline');
+
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -84,3 +90,9 @@ Route::get('/game-status', function (Request $request) {
 
 
 Route::get('/matches-played', [GameController::class, 'getMatchesPlayed'])->middleware('auth');
+
+use App\Http\Controllers\ProfileController;
+
+Route::get('/profile', [ProfileController::class, 'showProfile'])->middleware('auth')->name('profile');
+
+Route::post('/update-kraken', [GameController::class, 'updateKraken'])->name('update.kraken');

@@ -7,19 +7,24 @@ const playerShipsLeftDisplay = document.getElementById('player-ships-left');
 const computerShipsLeftDisplay = document.getElementById('computer-ships-left');
 
 const gridSize = 10;
-const shipColors = ['red', 'orange', 'purple', 'brown'];
-let crystalPosition = null; // موضع الكريستالة
+const shipColors = ['red', 'orange', 'purple', 'brown', 'navy', 'green'];
+
+
 
 const playerShips = [
     { size: 5, positions: new Set(), color: shipColors[0], hitPositions: new Set() },
     { size: 4, positions: new Set(), color: shipColors[1], hitPositions: new Set() },
-    { size: 3, positions: new Set(), color: shipColors[2], hitPositions: new Set() },
-    { size: 2, positions: new Set(), color: shipColors[3], hitPositions: new Set() }
+    { size: 4, positions: new Set(), color: shipColors[2], hitPositions: new Set() },
+    { size: 3, positions: new Set(), color: shipColors[3], hitPositions: new Set() },
+    { size: 3, positions: new Set(), color: shipColors[4], hitPositions: new Set() },
+    { size: 2, positions: new Set(), color: shipColors[5], hitPositions: new Set() }
 ];
 
 const computerShips = JSON.parse(JSON.stringify(playerShips));
 let playerTotalShipsLeft = playerShips.length;
 let computerTotalShipsLeft = computerShips.length;
+
+let tresor = { position: null };
 
 function initializeGame() {
     playerTotalShipsLeft;
@@ -31,8 +36,11 @@ function initializeGame() {
     resetShips(computerShips);
     placeShips(playerShips);
     placeShips(computerShips);
+    placeTresor(tresor);
+    console.log("🔍 Final tresor position after placement:", tresor.position);
     createGrid(playerGrid, playerShips, false);
-    createGrid(computerGrid, computerShips, true);
+    createGrid(computerGrid, computerShips, true, tresor);
+
 }
 
 function updateDisplays() {
@@ -73,15 +81,46 @@ function placeShips(ships) {
     });
 }
 
+
 function isPositionOccupied(position, ships) {
     return ships.some(ship => ship.positions.has(position));
 }
 
-function createGrid(gridElement, ships, isComputerGrid) {
+function placeTresor(tresor) {
+    let isPlaced = false;
+    let occupiedPositions = new Set();
+
+    // جمع مواقع السفن
+    playerShips.forEach(ship => ship.positions.forEach(pos => occupiedPositions.add(pos)));
+    computerShips.forEach(ship => ship.positions.forEach(pos => occupiedPositions.add(pos)));
+
+    // تحديد إذا كان سيتم وضع الكنز أم لا
+    const shouldPlace = Math.floor(Math.random() * 10) + 1; // رقم عشوائي بين 1 و 10
+
+    if (shouldPlace !== 1 && shouldPlace !== 2) {
+        tresor.position = null; // عدم وضع الكنز
+        return;
+    }
+
+    while (!isPlaced) {
+        const row = Math.floor(Math.random() * gridSize);
+        const col = Math.floor(Math.random() * gridSize);
+        const position = `${row}-${col}`;
+
+        if (!occupiedPositions.has(position)) {
+            tresor.position = position;
+            isPlaced = true;
+        }
+    }
+}
+
+function createGrid(gridElement, ships, isComputerGrid, tresor) {
     gridElement.style.display = 'grid';
     gridElement.style.gridTemplateColumns = `repeat(${gridSize}, minmax(25px, 1fr))`; // يجعل الخلايا مرنة
     gridElement.style.gap = '5px';
     gridElement.style.maxWidth = '90vw'; // يمنع الشبكة من التمدد أكثر من اللازم
+
+
     for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
             const cell = document.createElement('div');
@@ -91,6 +130,8 @@ function createGrid(gridElement, ships, isComputerGrid) {
             cell.style.cursor = 'pointer';
             cell.style.borderRadius = '5px';
             cell.dataset.position = `${row}-${col}`;
+
+
             if (!isComputerGrid) {
                 ships.forEach(ship => {
                     if (ship.positions.has(cell.dataset.position)) {
@@ -109,7 +150,7 @@ function createGrid(gridElement, ships, isComputerGrid) {
                         cell.style.backgroundColor = 'lightgray';
                     }
                 });
-                cell.addEventListener('click', () => handlePlayerAttack(cell, ships));
+                cell.addEventListener('click', () => handlePlayerAttack(cell, ships, tresor));
             }
             gridElement.appendChild(cell);
         }
@@ -162,12 +203,16 @@ function computerTurn() {
         playerShips.forEach(ship => {
             if (ship.positions.has(targetCell.dataset.position)) {
                 targetCell.style.backgroundColor = 'black';
+                targetCell.innerHTML = '🔥';
                 ship.hitPositions.add(targetCell.dataset.position);
                 hitAgain = true;
-
                 if (ship.hitPositions.size === ship.size) {
                     ship.positions.forEach(pos => {
-                        document.querySelector(`#player-grid [data-position="${pos}"]`).style.backgroundColor = ship.color;
+                        let shipCell = document.querySelector(`#player-grid [data-position="${pos}"]`);
+                        if (ship.hitPositions.has(pos)) {
+                            shipCell.innerHTML = '🚢'; // ✅ وضع السفينة فقط على الأماكن المصابة
+                        }
+                        shipCell.style.backgroundColor = ship.color;
                     });
                     playerTotalShipsLeft--;
                     lastHit = null;
@@ -206,7 +251,7 @@ function computerTurn() {
         if (playerTotalShipsLeft === 0) {
             setTimeout(() => {
                 alert('❌ Computer Wins!');
-                sendScoreToDatabase(-50, 0, 1, 0);
+                sendScoreToDatabase(-50, 1, 0, 0, "vsComputer");
                 enablePlayerBoard();
             }, 500);
             return;
@@ -233,87 +278,106 @@ function enableComputerBoard() {
     document.querySelector('#computer-grid').style.opacity = '1';
 }
 
-function handlePlayerAttack(cell, ships) {
+function handlePlayerAttack(cell, ships, tresor) {
     if (cell.style.backgroundColor !== 'yellow') return;
 
     disableComputerBoard(); // تعطيل الكمبيوتر أثناء دور اللاعب
 
     let isShipHit = false;
-    if (cell.dataset.position === crystalPosition) {
-        cell.style.backgroundColor = 'purple';
-        cell.innerText = '💎';
+
+    // ✅ تحقق أولًا: هل الخلية تحتوي على الكنز؟
+    if (tresor && cell.dataset.position === tresor.position) {
+        cell.style.backgroundColor = 'gold';
+        cell.innerHTML = '<img src="images/treasure-chest.png" width="24" height="24">';
         sendScoreToDatabase(25, 0, 0, 1);
-    } else {
-        ships.forEach(ship => {
-            if (ship.positions.has(cell.dataset.position)) {
-                cell.style.backgroundColor = 'black';
-                ship.hitPositions.add(cell.dataset.position);
-                sendScoreToDatabase(1, 0, 0, 0);
-                if (ship.hitPositions.size === ship.size) {
-                    ship.positions.forEach(pos => {
-                        document.querySelector(`#computer-grid [data-position="${pos}"]`).style.backgroundColor = ship.color;
-                    });
-                    computerTotalShipsLeft--;
-                    updateDisplays();
-                }
-                isShipHit = true;
-            }
-        });
+        let treasureModal = new bootstrap.Modal(document.getElementById('treasureModal'));
+        treasureModal.show();
+        tresor.position = null; // تعطيل الكنز بعد العثور عليه
+        enableComputerBoard(); // تمكين الكمبيوتر بعد انتهاء الهجوم
+        return; // 🛑 إيقاف التنفيذ هنا لمنع أي تغييرات أخرى
     }
 
+    // 🔍 البحث عن السفن وضربها
+    ships.forEach(ship => {
+        if (ship.positions.has(cell.dataset.position)) {
+            cell.style.backgroundColor = 'black';
+            cell.innerHTML = '🔥';
+            ship.hitPositions.add(cell.dataset.position);
+
+            if (ship.hitPositions.size === ship.size) {
+                ship.positions.forEach(pos => {
+                    let shipCell = document.querySelector(`#computer-grid [data-position="${pos}"]`);
+                    shipCell.style.backgroundColor = ship.color;
+                    shipCell.innerHTML = '🚢';
+                });
+                computerTotalShipsLeft--;
+                updateDisplays();
+            }
+            isShipHit = true;
+        }
+    });
+
+    // ✅ لا تغيّر لون الكنز إلى الأزرق
     if (!isShipHit) {
         cell.style.backgroundColor = 'blue';
         setTimeout(() => {
-            enableComputerBoard(); // إعادة تمكين الكمبيوتر بعد هجوم اللاعب
+            enableComputerBoard();
             computerTurn();
         }, 500);
     } else {
-        enableComputerBoard(); // إعادة تمكين الكمبيوتر بعد انتهاء الهجوم
+        enableComputerBoard();
     }
 
     updateDisplays();
     if (computerTotalShipsLeft === 0) {
         alert('🎉 Player Wins!');
-        sendScoreToDatabase(100, 1, 0, 0);
+        sendScoreToDatabase(100, 1, 0, 0, "vsComputer");
         setTimeout(() => {
-            enableComputerBoard(); // إعادة تمكين الكمبيوتر عند بدء لعبة جديدة
+            enableComputerBoard();
             initializeGame();
         }, 1000);
     }
 }
 
 
+
+
 retryButton.addEventListener('click', initializeGame);
 initializeGame();
 
-function sendScoreToDatabase(score, wins, losses, crystals) {
-    console.log("Sending Data:", { score, wins, losses, crystals }); // ✅ طباعة البيانات قبل الإرسال
+function sendScoreToDatabase(score, wins, losses, tresor, matchType = null) {
+    const data = {
+        score,
+        wins,
+        losses,
+        tresor
+    };
+
+    if (matchType) {
+        data.match_type = matchType;
+    }
+
+    console.log("📤 Sending Data:", data); // ✅ تحقق مما يتم إرساله
 
     fetch('/update-score', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
-        body: JSON.stringify({
-            score,
-            wins,
-            losses,
-            crystals,
-            match_type: "vsComputer"
+        body: JSON.stringify(data)
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log("✅ Server Response:", data);
         })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Server responded with status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log("✅ Server Response:", data);
-    })
-    .catch(error => console.error('❌ Fetch error:', error));
+        .catch(error => console.error('❌ Fetch error:', error));
 }
+
+
+
+
 
 
 

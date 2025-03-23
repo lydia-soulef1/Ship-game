@@ -11,13 +11,9 @@ class Leaderboard extends Model
 
     protected $table = 'leaderboard'; // تأكد من اسم الجدول
     protected $fillable = [
-        'user_id',
-        'name', // ✅ تأكد من أن هذا الحقل موجود
-        'score',
-        'wins',
-        'losses',
-        'crystals',
-        'last_match_time',
+        'user_id', 'name', 'score', 'wins', 'losses',
+        'last_match_time', 'tresor', 'gold', 'kraken',
+        'achievements_count', 'matches_played'
     ];
     
 

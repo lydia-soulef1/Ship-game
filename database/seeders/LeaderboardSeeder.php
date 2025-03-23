@@ -14,18 +14,15 @@ class LeaderboardSeeder extends Seeder
             DB::table('users')->select('id as user_id', 'name', 'score', 'wins', 'loses')
                 ->get()->map(function ($user) {
                     return [
-                        'user_id' => $user->user_id,
-                        'name' => $user->name,
-                        'score' => $user->score,
-                        'wins' => $user->wins,
-                        'losses' => $user->loses,
-                        'last_match_time' => now(),
-                        'crystals' => 0,
-                        'created_at' => now(),
-                        'updated_at' => now()
+                        'gold' => 200, // قيمة البداية
+                        'kraken' => 0, // قيمة افتراضية
+                        'achievements_count' => 0,
+                        'matches_played' => json_encode([
+                            'vsOnline' => $user->matches_played['vsOnline'] ?? 0,
+                            'vsComputer' => $user->matches_played['vsComputer'] ?? 0,
+                        ]),
                     ];
                 })->toArray()
         );
     }
 }
-

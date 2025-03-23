@@ -51,8 +51,8 @@
             <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
                 @if(Auth::check())
                 <li><span class="dropdown-item-text fw-bold">Welcome, {{ Auth::user()->name }}</span></li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('profile') }}">👤 profile</a>
+                <li>
+                    <a class="dropdown-item" href="{{ route('profile') }}">👤 Profile</a>
                 </li>
                 @else
                 <li><button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button></li>
@@ -81,19 +81,20 @@
     <div id="currency-display" class="position-absolute top-0 end-0 m-3 d-flex align-items-center gap-3">
         <!-- Kraken Display -->
         <div id="kraken-display" class="d-flex align-items-center bg-black text-white px-2 py-1 rounded-pill shadow-sm"
-            data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ Auth::user()->kraken ?? 0 }} Kraken">
+            data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ Auth::user()->leaderboard->kraken ?? 0 }} Kraken">
             <span class="fs-6 fw-bold me-2">🦑</span>
-            <span id="kraken-count" class="fs-6 fw-bold">{{ Auth::user()->kraken ?? 0 }}</span>
+            <span id="kraken-count" class="fs-6 fw-bold">{{ Auth::user()->leaderboard->kraken ?? 0 }}</span>
         </div>
 
         <!-- Gold Display -->
         <div id="gold-display" class="d-flex align-items-center bg-black text-white px-2 py-1 rounded-pill shadow-sm"
-            data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ Auth::user()->gold ?? 0 }} Gold">
+            data-bs-toggle="tooltip" data-bs-placement="bottom" title="{{ Auth::user()->leaderboard->gold ?? 0 }} Gold">
             <span class="fs-6 fw-bold">
-                💰 <span id="gold-count">{{ Auth::user()->gold ?? 0 }}</span>
+                💰 <span id="gold-count">{{ Auth::user()->leaderboard->gold ?? 0 }}</span>
             </span>
         </div>
     </div>
+
     @endif
     <!-- Unified Tooltip Script -->
     <script>

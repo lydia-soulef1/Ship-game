@@ -18,86 +18,102 @@ class GameController extends Controller
             'score' => 'required|integer',
             'wins' => 'required|integer',
             'losses' => 'required|integer',
-            'crystals' => 'required|integer',
-            'match_type' => 'required|string|in:vsOnline,vsComputer',
+            'tresor' => 'required|integer',
         ]);
-    
+
         $user = Auth::user();
         $guestName = "guest_" . rand(1000, 9999);
-    
+
+        // إذا كان المستخدم ضيفًا
         if (!$user) {
-            // 🔍 البحث عن سجل الضيف
             $leaderboardEntry = Leaderboard::where('user_id', null)
                 ->where('name', $guestName)
                 ->first();
-    
+
             if ($leaderboardEntry) {
                 $leaderboardEntry->increment('score', $validated['score']);
                 $leaderboardEntry->increment('wins', $validated['wins']);
                 $leaderboardEntry->increment('losses', $validated['losses']);
-                $leaderboardEntry->increment('crystals', $validated['crystals']);
+                $leaderboardEntry->increment('tresor', $validated['tresor']);
                 $leaderboardEntry->update(['last_match_time' => now()]);
-    
-                return response()->json(['success' => true, 'message' => "Guest score updated in leaderboard"]);
             } else {
-                Leaderboard::create([
+                $leaderboardEntry = Leaderboard::create([
                     'user_id' => null,
                     'name' => $guestName,
                     'score' => $validated['score'],
                     'wins' => $validated['wins'],
                     'losses' => $validated['losses'],
-                    'crystals' => $validated['crystals'],
+                    'tresor' => $validated['tresor'],
+                    'matches_played' => json_encode(['vsOnline' => 0, 'vsComputer' => 0]),
                     'last_match_time' => now(),
                 ]);
-    
-                return response()->json(['success' => true, 'message' => "Guest score added to leaderboard"]);
             }
+
+            // ✅ تعريف `$matchesPlayed` حتى لو لم يكن هناك `match_type`
+            $matchesPlayed = json_decode($leaderboardEntry->matches_played, true) ?? ['vsOnline' => 0, 'vsComputer' => 0];
+
+            if ($request->has('match_type')) {
+                $matchesPlayed[$request->match_type] = ($matchesPlayed[$request->match_type] ?? 0) + 1;
+                $leaderboardEntry->update(['matches_played' => json_encode($matchesPlayed)]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Guest score updated successfully",
+            ]);
         }
-    
+
         // 🔍 البحث عن سجل المستخدم
         $leaderboardEntry = Leaderboard::where('user_id', $user->id)->first();
-    
+
         if ($leaderboardEntry) {
             $leaderboardEntry->increment('score', $validated['score']);
             $leaderboardEntry->increment('wins', $validated['wins']);
             $leaderboardEntry->increment('losses', $validated['losses']);
-            $leaderboardEntry->increment('crystals', $validated['crystals']);
+            $leaderboardEntry->increment('tresor', $validated['tresor']);
             $leaderboardEntry->update(['last_match_time' => now()]);
         } else {
-            Leaderboard::create([
+            $leaderboardEntry = Leaderboard::create([
                 'user_id' => $user->id,
                 'name' => $user->name ?? $guestName,
                 'score' => $validated['score'],
                 'wins' => $validated['wins'],
                 'losses' => $validated['losses'],
-                'crystals' => $validated['crystals'],
+                'tresor' => $validated['tresor'],
+                'matches_played' => json_encode(['vsOnline' => 0, 'vsComputer' => 0]),
                 'last_match_time' => now(),
             ]);
         }
-    
-        // ✅ تحديث عدد المباريات
-        $matchesPlayed = json_decode($user->matches_played, true) ?? ['vsOnline' => 0, 'vsComputer' => 0];
-    
-        if (!isset($matchesPlayed[$validated['match_type']])) {
-            $matchesPlayed[$validated['match_type']] = 0;
+
+        // ✅ تعريف `$matchesPlayed` قبل استخدامه
+        $matchesPlayed = json_decode($leaderboardEntry->matches_played, true) ?? ['vsOnline' => 0, 'vsComputer' => 0];
+
+        if ($request->has('match_type')) {
+            $matchesPlayed[$request->match_type] = ($matchesPlayed[$request->match_type] ?? 0) + 1;
+            $leaderboardEntry->update(['matches_played' => json_encode($matchesPlayed)]);
         }
-    
-        $matchesPlayed[$validated['match_type']] += 1;
-    
-        $user->update([
-            'matches_played' => json_encode($matchesPlayed),
-        ]);
-    
+
         return response()->json([
             'success' => true,
-            'message' => 'Match played count updated successfully',
-            'matches_played' => $matchesPlayed,
+            'message' => 'Score updated successfully',
         ]);
     }
-    
 
+    public function updateKraken(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not authenticated.']);
+        }
 
+        $leaderboard = $user->leaderboard;
+        $leaderboard->increment('kraken', $request->increment);
 
+        return response()->json([
+            'success' => true,
+            'newKrakenCount' => $leaderboard->kraken
+        ]);
+    }
 
     public function leaderboard()
     {
@@ -119,7 +135,7 @@ class GameController extends Controller
 
         return response()->json($query->take(10)->get());
     }
-    
+
 
     public function createRoom()
     {
@@ -148,19 +164,18 @@ class GameController extends Controller
     }
 
     public function getMatchesPlayed()
-{
-    $user = Auth::user();
-    
-    if (!$user) {
-        return response()->json(['success' => false, 'message' => 'Guests cannot see match statistics.']);
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Guests cannot see match statistics.']);
+        }
+
+        $matchesPlayed = json_decode($user->matches_played, true);
+
+        return response()->json([
+            'success' => true,
+            'matches_played' => $matchesPlayed,
+        ]);
     }
-
-    $matchesPlayed = json_decode($user->matches_played, true);
-    
-    return response()->json([
-        'success' => true,
-        'matches_played' => $matchesPlayed,
-    ]);
-}
-
 }
