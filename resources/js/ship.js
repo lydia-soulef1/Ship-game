@@ -76,6 +76,7 @@ function generateShipSelection() {
                 selectedShip.childNodes.forEach(cell => {
                     cell.style.backgroundColor = originalColor;
                 });
+                flipButton.disabled = true;
             }
 
             // تحديد السفينة الجديدة وتغيير لونها
@@ -83,6 +84,7 @@ function generateShipSelection() {
             originalColor = ship.color;
             selectedShip.childNodes.forEach(cell => {
                 cell.style.backgroundColor = "lightgray"; // تغيير اللون عند التحديد
+                flipButton.disabled = false;
             });
         });
 
@@ -155,7 +157,7 @@ function initializeGame() {
     placeTresor(tresor);
     console.log("🔍 Final tresor position:", tresor.position);
 
-    createGrid(playerGrid, playerShips, true);
+    createGrid(playerGrid, playerShips, false);
     createGrid(computerGrid, computerShips, true, tresor);
 
     generateShipSelection();
@@ -163,7 +165,7 @@ function initializeGame() {
     document.getElementById("ship-selection").style.display = "block";
     document.getElementById("computer-section").style.display = "none";
 
-
+    flipButton.disabled = true;
 }
 
 document.getElementById("start-game-button").addEventListener("click", function () {
