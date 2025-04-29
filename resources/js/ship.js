@@ -1,8 +1,7 @@
 const playerGrid = document.getElementById('player-grid');
 const computerGrid = document.getElementById('computer-grid');
 const retryButton = document.getElementById('retry');
-const playerAttemptsDisplay = document.getElementById('player-attempts');
-const computerAttemptsDisplay = document.getElementById('computer-attempts');
+
 const playerShipsLeftDisplay = document.getElementById('player-ships-left');
 const computerShipsLeftDisplay = document.getElementById('computer-ships-left');
 
@@ -19,6 +18,7 @@ const shipColors = ['red', 'orange', 'purple', 'brown', 'navy', 'green'];
 
 
 
+
 const playerShips = [
     { size: 5, positions: new Set(), color: shipColors[0], hitPositions: new Set() },
     { size: 4, positions: new Set(), color: shipColors[1], hitPositions: new Set() },
@@ -28,106 +28,73 @@ const playerShips = [
     { size: 2, positions: new Set(), color: shipColors[5], hitPositions: new Set() }
 ];
 
+setTimeout(() => {
+    console.log(document.querySelectorAll(".ship").length); // يجب أن يكون أكبر من 0
+}, 1000);
+
+function initializeGame() {
+    playerTotalShipsLeft = playerShips.length;
+    computerTotalShipsLeft = computerShips.length;
+    updateDisplays();
+    playerGrid.innerHTML = '';
+    computerGrid.innerHTML = '';
+    RandomButton.textContent = "Random";
+    resetShips(computerShips);
+    placeShips(computerShips);
+    placeTresor(tresor);
+    createGrid(playerGrid, playerShips, false);
+    createGrid(computerGrid, computerShips, true, tresor);
+    RandomButton.textContent = "Random";
+    generateShipSelection();
+    document.getElementById("ship-selection").style.display = "block";
+    document.getElementById("computer-section").style.display = "none";
+    flipButton.disabled = true;
+}
+
 const computerShips = JSON.parse(JSON.stringify(playerShips));
 let playerTotalShipsLeft = playerShips.length;
 let computerTotalShipsLeft = computerShips.length;
 
 let tresor = { position: null };
 
-
 let selectedShip = null;
-let originalColor = ""; // لتخزين اللون الأصلي عند التحديد
+let originalColor = null;
 
-function generateShipSelection() {
-    const shipOptionsContainer = document.getElementById("ship-options");
-    shipOptionsContainer.innerHTML = '';
+// تعطيل زر "Flip" في البداية
+flipButton.disabled = true;
 
-    const gridCell = document.querySelector("#player-grid div");
-    if (!gridCell) return;
-
-    const gridGap = 5;
-    const cellSize = gridCell.getBoundingClientRect().width;
-    const totalWidth = (cellSize * 10) + (gridGap * 9);
-
-    document.getElementById("ship-selection").style.maxWidth = `${totalWidth}px`;
-
-    playerShips.forEach((ship) => {
-        const shipDiv = document.createElement("div");
-        shipDiv.classList.add("ship-option");
-        shipDiv.style.display = "grid";
-        shipDiv.style.gridTemplateColumns = `repeat(${ship.size}, ${cellSize}px)`;
-        shipDiv.style.gap = `${gridGap}px`;
-        shipDiv.style.cursor = "pointer";
-        shipDiv.style.maxWidth = `${totalWidth}px`;
-
-        for (let i = 0; i < ship.size; i++) {
-            const cell = document.createElement("div");
-            cell.style.width = `${cellSize}px`;
-            cell.style.height = `${cellSize}px`;
-            cell.style.backgroundColor = ship.color;
-            cell.style.borderRadius = "5px";
-            shipDiv.appendChild(cell);
-        }
-
-        // عند النقر على السفينة، يتم تحديدها وتغيير لونها
-        shipDiv.addEventListener("click", () => {
-            if (selectedShip) {
-                // إعادة لون السفينة السابقة إلى لونها الأصلي
-                selectedShip.childNodes.forEach(cell => {
-                    cell.style.backgroundColor = originalColor;
-                });
-                flipButton.disabled = true;
-            }
-
-            // تحديد السفينة الجديدة وتغيير لونها
-            selectedShip = shipDiv;
-            originalColor = ship.color;
-            selectedShip.childNodes.forEach(cell => {
-                cell.style.backgroundColor = "lightgray"; // تغيير اللون عند التحديد
-                flipButton.disabled = false;
-            });
+document.addEventListener("click", (event) => {
+    // التأكد من أن النقر ليس على سفينة
+    if (selectedShip && !selectedShip.contains(event.target)) {
+        selectedShip.childNodes.forEach(cell => {
+            cell.style.backgroundColor = originalColor; // إرجاع اللون الأصلي
         });
+        selectedShip = null;
+        flipButton.disabled = true; // تعطيل زر التدوير عند إلغاء التحديد
+    }
+});
 
-        shipOptionsContainer.appendChild(shipDiv);
-    });
-}
-
-// عند الضغط على زر "Flip"، يتم تدوير السفينة المحددة فقط
 flipButton.addEventListener("click", () => {
     if (selectedShip) {
-        const currentOrientation = selectedShip.dataset.orientation;
+        const shipIndex = parseInt(selectedShip.dataset.shipIndex);
+        const ship = playerShips[shipIndex];
 
-        if (currentOrientation === "horizontal") {
-            selectedShip.style.gridTemplateColumns = "1fr";
-            selectedShip.style.gridTemplateRows = `repeat(${selectedShip.childElementCount}, ${selectedShip.children[0].offsetHeight}px)`;
-            selectedShip.dataset.orientation = "vertical";
-        } else {
-            selectedShip.style.gridTemplateColumns = `repeat(${selectedShip.childElementCount}, ${selectedShip.children[0].offsetWidth}px)`;
+        // عكس الاتجاه
+        ship.isHorizontal = !ship.isHorizontal;
+        selectedShip.dataset.isHorizontal = ship.isHorizontal; // تحديث الاتجاه في العنصر
+
+        console.log(`🔄 تم تدوير السفينة ${shipIndex} إلى ${ship.isHorizontal ? "أفقي" : "عمودي"}`);
+
+        // تحديث مظهر السفينة
+        if (ship.isHorizontal) {
+            selectedShip.style.gridTemplateColumns = `repeat(${ship.size}, 1fr)`;
             selectedShip.style.gridTemplateRows = "1fr";
-            selectedShip.dataset.orientation = "horizontal";
+        } else {
+            selectedShip.style.gridTemplateColumns = "1fr";
+            selectedShip.style.gridTemplateRows = `repeat(${ship.size}, 1fr)`;
         }
     }
 });
-
-
-// عند الضغط على زر "Flip"، يتم تدوير السفينة المحددة فقط
-document.getElementById("flip-button").addEventListener("click", () => {
-    if (selectedShip) {
-        const isHorizontal = selectedShip.style.gridTemplateColumns !== "1fr";
-        if (isHorizontal) {
-            selectedShip.style.gridTemplateColumns = "1fr";
-            selectedShip.style.gridTemplateRows = `repeat(${selectedShip.childElementCount}, ${selectedShip.children[0].offsetHeight}px)`;
-        } else {
-            selectedShip.style.gridTemplateColumns = `repeat(${selectedShip.childElementCount}, ${selectedShip.children[0].offsetWidth}px)`;
-            selectedShip.style.gridTemplateRows = "1fr";
-        }
-    }
-});
-
-
-setTimeout(generateShipSelection, 100);
-
-
 
 document.getElementById("start-game-button").addEventListener("click", function () {
     document.getElementById("ship-selection").style.display = "none";
@@ -136,44 +103,12 @@ document.getElementById("start-game-button").addEventListener("click", function 
         ship.positions.forEach(position => {
             const cell = document.querySelector(`#player-grid div[data-position="${position}"]`);
             if (cell) {
-                cell.style.backgroundColor = "darkgray"; 
+                cell.style.backgroundColor = "darkgray";
             }
         });
     });
 
 });
-
-
-retryButton.addEventListener('click', initializeGame);
-
-function initializeGame() {
-    playerTotalShipsLeft = playerShips.length;
-    computerTotalShipsLeft = computerShips.length;
-    updateDisplays();
-    playerGrid.innerHTML = '';
-    computerGrid.innerHTML = '';
-    resetShips(computerShips);
-    placeShips(computerShips);
-    placeTresor(tresor);
-    console.log("🔍 Final tresor position:", tresor.position);
-
-    createGrid(playerGrid, playerShips, false);
-    createGrid(computerGrid, computerShips, true, tresor);
-
-    generateShipSelection();
-
-    document.getElementById("ship-selection").style.display = "block";
-    document.getElementById("computer-section").style.display = "none";
-
-    flipButton.disabled = true;
-}
-
-document.getElementById("start-game-button").addEventListener("click", function () {
-    document.getElementById("ship-selection").style.display = "none";
-    document.getElementById("computer-section").style.display = "block";
-});
-
-generateShipSelection();
 
 function updateDisplays() {
     playerShipsLeftDisplay.innerHTML = `Player Ships Left: ${playerTotalShipsLeft}`;
@@ -184,31 +119,49 @@ function resetShips(ships) {
     ships.forEach(ship => {
         ship.positions = new Set();
         ship.hitPositions = new Set();
+
+        document.querySelectorAll(".grid-cell").forEach(cell => {
+            cell.classList.remove("occupied", "highlighted");
+            cell.style.backgroundColor = ""; // إزالة أي لون متبقي
+        });
+        const shipOptions = document.getElementById("ship-options");
+        shipOptions.innerHTML = '';
+        generateShipSelection();
     });
 }
 
 RandomButton.addEventListener("click", () => {
-    document.querySelectorAll("#player-grid div").forEach(cell => {
-        cell.style.backgroundColor = "lightgray"; // إعادة لون الشبكة للحالة الأصلية
-    });
+    if (RandomButton.textContent === "Random") {
+        document.querySelectorAll("#player-grid div").forEach(cell => {
+            cell.style.backgroundColor = "lightgray"; // إعادة لون الشبكة للحالة الأصلية
+        });
 
-    // إعادة تعيين مواقع السفن
-    resetShips(playerShips);
-    placeShips(playerShips);
+        // إعادة تعيين مواقع السفن
+        resetShips(playerShips);
+        placeShips(playerShips);
 
-    // تحديث الشبكة بوضع السفن الجديدة
-    playerShips.forEach(ship => {
-        ship.positions.forEach(position => {
-            const cell = document.querySelector(`#player-grid div[data-position="${position}"]`);
-            if (cell) {
-                cell.style.backgroundColor = ship.color; // استخدام اللون الخاص بكل سفينة
+        // تحديث الشبكة بوضع السفن الجديدة
+        playerShips.forEach((ship, index) => {
+            ship.positions.forEach(position => {
+                const cell = document.querySelector(`#player-grid div[data-position="${position}"]`);
+                if (cell) {
+                    cell.style.backgroundColor = ship.color; // استخدام اللون الخاص بكل سفينة
+                }
+            });
+
+            // 🟢 إزالة السفينة من كارد الاختيار بعد وضعها في الشبكة
+            const shipDiv = document.querySelector(`[data-ship-index="${index}"]`);
+            if (shipDiv) {
+                shipDiv.remove();
             }
         });
-    });
+        RandomButton.textContent = "Reset"; // تحويله إلى زر Reset
+    } else {
+        resetShips(playerShips); // إرجاع السفن إلى منطقة الاختيار
+        RandomButton.textContent = "Random"; // إعادته إلى زر Random
+    }
+
 });
-
-
-
 
 function placeShips(ships) {
     ships.forEach(ship => {
@@ -270,23 +223,176 @@ function placeTresor(tresor) {
     }
 }
 
+function generateShipSelection() {
+    const shipOptionsContainer = document.getElementById("ship-options");
+    shipOptionsContainer.innerHTML = '';
+
+    const gridCell = document.querySelector("#player-grid div");
+    if (!gridCell) return;
+
+    const gridGap = 5;
+    const cellSize = gridCell.getBoundingClientRect().width;
+    const totalWidth = (cellSize * 9) + (gridGap * 9);
+
+    document.getElementById("ship-selection").style.maxWidth = `${totalWidth}px`;
+
+    playerShips.forEach((ship, index) => {
+        const shipDiv = document.createElement("div");
+        shipDiv.classList.add("ship-option"); // تأكد من استخدام الفئة الصحيحة
+        shipDiv.style.display = "grid";
+        shipDiv.style.gridTemplateColumns = ship.isHorizontal ? `repeat(${ship.size}, ${cellSize}px)` : "1fr";
+        shipDiv.style.gridTemplateRows = ship.isHorizontal ? "1fr" : `repeat(${ship.size}, ${cellSize}px)`;
+        shipDiv.style.gap = `${gridGap}px`;
+        shipDiv.style.cursor = "grab";
+        shipDiv.style.maxWidth = `${totalWidth}px`;
+        shipDiv.draggable = true;
+        shipDiv.dataset.shipIndex = index.toString(); // ✅ تأكد من تعيين الفهرس الصحيح
+        shipDiv.dataset.isHorizontal = (ship.isHorizontal !== undefined) ? ship.isHorizontal.toString() : "false";
+
+        for (let i = 0; i < ship.size; i++) {
+            const cell = document.createElement("div");
+            cell.style.width = `${cellSize}px`;
+            cell.style.height = `${cellSize}px`;
+            cell.style.backgroundColor = ship.color;
+            cell.style.borderRadius = "5px";
+            shipDiv.appendChild(cell);
+        }
+
+        shipDiv.addEventListener("click", (event) => {
+            event.stopPropagation();
+
+            if (selectedShip) {
+                selectedShip.childNodes.forEach(cell => {
+                    cell.style.backgroundColor = originalColor;
+                });
+            }
+
+            selectedShip = shipDiv;
+            originalColor = ship.color;
+            selectedShip.childNodes.forEach(cell => {
+                cell.style.backgroundColor = "lightgray";
+            });
+
+            selectedShip.dataset.isHorizontal = ship.isHorizontal; // تحديث الاتجاه
+            flipButton.disabled = false;
+        });
+
+        shipOptionsContainer.appendChild(shipDiv);
+    });
+
+    // ✅ قم بتعيين `shipIndex` بعد إضافة جميع السفن
+    document.querySelectorAll(".ship-option").forEach((ship, index) => {
+        ship.dataset.shipIndex = index; // تأكد من تعيين الفهرس لكل سفينة
+        ship.draggable = true;
+
+        ship.addEventListener("dragstart", (event) => {
+            RandomButton.textContent = "Reset";
+            ship.dataset.dragging = "true";
+            const shipIndex = ship.dataset.shipIndex;
+            const isHorizontal = ship.dataset.isHorizontal === "true"; // تحويل إلى Boolean
+            event.dataTransfer.effectAllowed = "move";
+
+
+            if (!shipIndex) {
+                return;
+            }
+
+            event.dataTransfer.setData("shipIndex", index.toString());
+            event.dataTransfer.setData("isHorizontal", event.target.dataset.isHorizontal);
+
+            ship.classList.add("dragging");
+
+
+            ship.addEventListener('dragend', () => {
+                ship.classList.remove("dragging");
+            });
+        });
+    });
+
+
+
+}
+
+setTimeout(generateShipSelection, 100);
+
+function placeDraggedShip(shipIndex, row, col, isHorizontal) {
+    const ship = playerShips[shipIndex];
+    if (!ship) {
+        console.error("❌ السفينة غير موجودة: index =", shipIndex);
+        return;
+    }
+    ship.isHorizontal = true;
+    let isPlaced = true;
+
+    for (let i = 0; i < ship.size; i++) {
+        const position = isHorizontal ? `${row}-${col + i}` : `${row + i}-${col}`;
+        const cell = document.querySelector(`[data-position="${position}"]`);
+
+        if (!cell || cell.style.backgroundColor !== 'lightgray') {
+            console.warn("⚠️ لا يمكن وضع السفينة هنا، يوجد تداخل.");
+            isPlaced = false;
+            break;
+        }
+    }
+
+    if (isPlaced) {
+        ship.positions.forEach(position => {
+            const cell = document.querySelector(`[data-position="${position}"]`);
+            if (cell) {
+                cell.style.backgroundColor = "lightgray";
+                delete cell.dataset.shipIndex;
+            }
+        });
+        ship.positions.clear();
+
+        for (let i = 0; i < ship.size; i++) {
+            const position = isHorizontal ? `${row}-${col + i}` : `${row + i}-${col}`;
+            const cell = document.querySelector(`[data-position="${position}"]`);
+            if (cell) {
+                cell.style.backgroundColor = ship.color;
+                ship.positions.add(position);
+                cell.dataset.shipIndex = shipIndex;
+            }
+        }
+
+        ship.isHorizontal = isHorizontal;
+        console.log(`✅ تم وضع السفينة ${shipIndex} بـ ${isHorizontal ? "أفقي" : "عمودي"}`);
+
+        // تحديث مظهر السفينة بعد وضعها
+        const shipDiv = document.querySelector(`[data-ship-index="${shipIndex}"]`);
+        if (shipDiv) {
+            if (isHorizontal) {
+                shipDiv.style.gridTemplateColumns = `repeat(${ship.size}, 1fr)`;
+                shipDiv.style.gridTemplateRows = "1fr";
+            } else {
+                shipDiv.style.gridTemplateColumns = "1fr";
+                shipDiv.style.gridTemplateRows = `repeat(${ship.size}, 1fr)`;
+            }
+        }
+    }
+}
+
+
+
+
 function createGrid(gridElement, ships, isComputerGrid, tresor) {
     gridElement.style.display = 'grid';
-    gridElement.style.gridTemplateColumns = `repeat(${gridSize}, minmax(25px, 1fr))`; // يجعل الخلايا مرنة
+    gridElement.style.gridTemplateColumns = `repeat(${gridSize}, minmax(25px, 1fr))`;
     gridElement.style.gap = '5px';
-    gridElement.style.maxWidth = '90vw'; // يمنع الشبكة من التمدد أكثر من اللازم
-
+    gridElement.style.maxWidth = '90vw';
 
     for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
             const cell = document.createElement('div');
+            cell.classList.add("grid-cell"); // ✅ إضافة كلاس لتعريف الخلايا
             cell.style.width = '100%';
-            cell.style.aspectRatio = '1 / 1'; // يجعل المربعات مربعة دائماً
+            cell.style.aspectRatio = '1 / 1';
             cell.style.backgroundColor = 'lightgray';
             cell.style.cursor = 'pointer';
             cell.style.borderRadius = '5px';
             cell.dataset.position = `${row}-${col}`;
-
+            cell.dataset.row = row;
+            cell.dataset.col = col;
 
             if (!isComputerGrid) {
                 ships.forEach(ship => {
@@ -294,7 +400,61 @@ function createGrid(gridElement, ships, isComputerGrid, tresor) {
                         cell.style.backgroundColor = 'darkgray';
                     }
                 });
+
+                cell.addEventListener("dragover", (event) => {
+                    event.preventDefault();
+                    const targetCell = event.target.closest(".grid-cell"); // ✅ البحث عن الكلاس الصحيح
+                    if (!targetCell) {
+                        console.log('null')
+                    };
+
+                    const shipIndex = event.dataTransfer.getData("shipIndex"); // ✅ استرجاع `shipIndex`
+                    const isHorizontal = event.dataTransfer.getData("isHorizontal") === "true";
+
+                    if (!shipIndex) {
+                        console.error("❌ shipIndex غير متوفر في dragover!", { shipIndex, event });
+                        return;
+                    }
+
+                    const row = parseInt(targetCell.dataset.row, 10);
+                    const col = parseInt(targetCell.dataset.col, 10);
+
+                    highlightPotentialPlacement(row, col, parseInt(shipIndex, 10), isHorizontal);
+                });
+
+                cell.addEventListener("dragleave", () => {
+                    // clearHighlightedCells();
+                });
+
+                cell.addEventListener("drop", (event) => {
+                    event.preventDefault();
+
+                    const shipIndex = event.dataTransfer.getData("shipIndex");
+                    const isHorizontal = event.dataTransfer.getData("isHorizontal") === "true";
+
+                    if (!shipIndex) {
+                        console.error("❌ لم يتم جلب shipIndex بشكل صحيح عند drop!", { shipIndex, event });
+                        return;
+                    }
+
+                    const row = parseInt(cell.dataset.row, 10);
+                    const col = parseInt(cell.dataset.col, 10);
+
+                    console.log(`✅ تم إسقاط السفينة ${shipIndex} في (${cell.dataset.position})`);
+                    placeDraggedShip(parseInt(shipIndex, 10), row, col, isHorizontal);
+
+                    const shipDiv = document.querySelector(`[data-ship-index="${shipIndex}"]`);
+                    if (shipDiv) {
+                        shipDiv.remove();
+                        console.log(`🚀 تم إزالة السفينة ${shipIndex} من الكارد`);
+                        shipDiv.addEventListener("dragend", () => {
+                            delete shipDiv.dataset.dragging;
+                        });
+                    }
+                    clearHighlightedCells();
+                });
             }
+
             if (isComputerGrid) {
                 cell.addEventListener('mouseover', () => {
                     if (cell.style.backgroundColor === 'lightgray') {
@@ -308,21 +468,13 @@ function createGrid(gridElement, ships, isComputerGrid, tresor) {
                 });
                 cell.addEventListener('click', () => handlePlayerAttack(cell, ships, tresor));
             }
+
             gridElement.appendChild(cell);
         }
     }
 }
 
 
-function disablePlayerBoard() {
-    document.querySelector('#player-grid').style.pointerEvents = 'none';
-    document.querySelector('#player-grid').style.opacity = '0.5';
-}
-
-function enablePlayerBoard() {
-    document.querySelector('#player-grid').style.pointerEvents = 'auto';
-    document.querySelector('#player-grid').style.opacity = '1';
-}
 
 let attackQueue = [];
 let lastHit = null;
@@ -332,8 +484,7 @@ let initialHit = null;
 function computerTurn() {
     if (playerTotalShipsLeft === 0) return;
 
-    disablePlayerBoard();
-
+    
     let hitAgain = false; // لتعقب الضربات المتتالية
 
     let directions = {
@@ -345,13 +496,13 @@ function computerTurn() {
         let availableCells = Array.from(document.querySelectorAll('#player-grid div'))
             .filter(cell => cell.style.backgroundColor === 'lightgray' || cell.style.backgroundColor === 'darkgray');
         if (availableCells.length === 0) {
-            enablePlayerBoard(); // إذا لم يكن هناك خلايا متاحة، ينتهي الدور فورًا
+             // إذا لم يكن هناك خلايا متاحة، ينتهي الدور فورًا
             return;
         }
 
         let targetCell = attackQueue.length > 0 ? attackQueue.shift() : availableCells[Math.floor(Math.random() * availableCells.length)];
         if (!targetCell) {
-            enablePlayerBoard();
+            
             return;
         }
 
@@ -408,7 +559,7 @@ function computerTurn() {
             setTimeout(() => {
                 alert('❌ Computer Wins!');
                 sendScoreToDatabase(-50, 1, 0, 0, "vsComputer");
-                enablePlayerBoard();
+                
             }, 500);
             return;
         }
@@ -416,41 +567,28 @@ function computerTurn() {
         if (hitAgain || attackQueue.length > 0) {
             attackNext(); // استمر في الهجوم
         } else {
-            enablePlayerBoard(); // انتهاء الدور
+             // انتهاء الدور
         }
     }
 
     attackNext();
 }
 
-
-function disableComputerBoard() {
-    document.querySelector('#computer-grid').style.pointerEvents = 'none';
-    document.querySelector('#computer-grid').style.opacity = '0.5';
-}
-
-function enableComputerBoard() {
-    document.querySelector('#computer-grid').style.pointerEvents = 'auto';
-    document.querySelector('#computer-grid').style.opacity = '1';
-}
-
 function handlePlayerAttack(cell, ships, tresor) {
     if (cell.style.backgroundColor !== 'yellow') return;
 
-    disableComputerBoard(); // تعطيل الكمبيوتر أثناء دور اللاعب
 
     let isShipHit = false;
 
-    // ✅ تحقق أولًا: هل الخلية تحتوي على الكنز؟
+
     if (tresor && cell.dataset.position === tresor.position) {
         cell.style.backgroundColor = 'gold';
         cell.innerHTML = '<img src="images/treasure-chest.png" width="24" height="24">';
         sendScoreToDatabase(25, 0, 0, 1);
         let treasureModal = new bootstrap.Modal(document.getElementById('treasureModal'));
         treasureModal.show();
-        tresor.position = null; // تعطيل الكنز بعد العثور عليه
-        enableComputerBoard(); // تمكين الكمبيوتر بعد انتهاء الهجوم
-        return; // 🛑 إيقاف التنفيذ هنا لمنع أي تغييرات أخرى
+        tresor.position = null;
+        return; 
     }
 
     // 🔍 البحث عن السفن وضربها
@@ -477,11 +615,11 @@ function handlePlayerAttack(cell, ships, tresor) {
     if (!isShipHit) {
         cell.style.backgroundColor = 'blue';
         setTimeout(() => {
-            enableComputerBoard();
+            
             computerTurn();
         }, 500);
     } else {
-        enableComputerBoard();
+        
     }
 
     updateDisplays();
@@ -489,7 +627,7 @@ function handlePlayerAttack(cell, ships, tresor) {
         alert('🎉 Player Wins!');
         sendScoreToDatabase(100, 1, 0, 0, "vsComputer");
         setTimeout(() => {
-            enableComputerBoard();
+            
             initializeGame();
         }, 1000);
     }
@@ -530,11 +668,3 @@ function sendScoreToDatabase(score, wins, losses, tresor, matchType = null) {
         })
         .catch(error => console.error('❌ Fetch error:', error));
 }
-
-
-
-
-
-
-
-
